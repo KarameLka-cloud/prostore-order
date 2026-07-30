@@ -1,0 +1,7 @@
+.venv/
+.flet/
+__pycache__/
+*.pyc
+Товарные чеки/
+receipt_counter.txt
+.DS_Store
