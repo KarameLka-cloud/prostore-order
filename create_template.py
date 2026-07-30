@@ -140,7 +140,8 @@ def _write_stacked_cell(cell, lines: list[tuple[str, dict]]) -> None:
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after = Pt(0)
         run = p.add_run(text)
-        _set_run_font(run, size=opts.get("size", 9), bold=opts.get("bold", False))
+        _set_run_font(run, size=opts.get("size", 9),
+                      bold=opts.get("bold", False))
     _set_cell_margins(cell)
 
 

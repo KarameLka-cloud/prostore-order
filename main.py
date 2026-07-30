@@ -20,6 +20,7 @@ COUNTER_PATH = ROOT / "receipt_counter.txt"
 
 VAT_OPTIONS = ["Без НДС", "0%", "10%", "20%"]
 
+# —— Палитра ——
 C_INK = "#1A2E24"
 C_MUTED = "#5C6B63"
 C_LINE = "#D5DDD8"
@@ -30,6 +31,18 @@ C_ACCENT_SOFT = "#E4EFE8"
 C_HEADER = "#243D32"
 C_DANGER = "#B42318"
 C_OK = "#1B6B3A"
+
+# —— Единая сетка отступов ——
+SPACE_XS = 4
+SPACE_SM = 8
+SPACE_MD = 12
+SPACE_LG = 16
+SPACE_XL = 24
+
+PAD_PAGE = SPACE_XL
+PAD_CARD = SPACE_LG
+RADIUS_SM = 8
+RADIUS_LG = 12
 
 
 def parse_decimal(text: str) -> Decimal:
@@ -78,7 +91,17 @@ def section_title(text: str, hint: str = "") -> ft.Control:
     ]
     if hint:
         controls.append(ft.Text(hint, size=12, color=C_MUTED))
-    return ft.Column(controls, spacing=4)
+    return ft.Column(controls, spacing=SPACE_XS)
+
+
+def panel_card(content: ft.Control, *, soft: bool = False) -> ft.Container:
+    return ft.Container(
+        content=content,
+        padding=PAD_CARD,
+        bgcolor=C_ACCENT_SOFT if soft else C_PANEL,
+        border=ft.Border.all(1, "#C5D9CC" if soft else C_LINE),
+        border_radius=RADIUS_LG,
+    )
 
 
 def main(page: ft.Page) -> None:
@@ -103,39 +126,36 @@ def main(page: ft.Page) -> None:
 
     items: list[ItemRow] = []
 
+    def field_style(**kwargs) -> dict:
+        return {
+            "dense": False,
+            "height": 52,
+            "border_color": C_LINE,
+            "focused_border_color": C_ACCENT,
+            "cursor_color": C_ACCENT,
+            "text_style": ft.TextStyle(color=C_INK, size=13),
+            "label_style": ft.TextStyle(color=C_MUTED, size=12),
+            **kwargs,
+        }
+
     number_field = ft.TextField(
         label="№ чека",
         value=peek_receipt_no(),
         width=110,
-        dense=True,
-        border_color=C_LINE,
-        focused_border_color=C_ACCENT,
-        cursor_color=C_ACCENT,
-        text_style=ft.TextStyle(color=C_INK, size=14),
-        label_style=ft.TextStyle(color=C_MUTED),
+        **field_style(),
     )
     date_field = ft.TextField(
         label="Дата",
         value=date.today().strftime("%d.%m.%Y"),
         width=150,
-        dense=True,
-        border_color=C_LINE,
-        focused_border_color=C_ACCENT,
-        cursor_color=C_ACCENT,
-        text_style=ft.TextStyle(color=C_INK, size=14),
-        label_style=ft.TextStyle(color=C_MUTED),
+        **field_style(),
     )
     buyer_field = ft.TextField(
         label="Покупатель",
         value="Розничный покупатель",
         hint_text="ФИО / организация",
         expand=True,
-        dense=True,
-        border_color=C_LINE,
-        focused_border_color=C_ACCENT,
-        cursor_color=C_ACCENT,
-        text_style=ft.TextStyle(color=C_INK, size=14),
-        label_style=ft.TextStyle(color=C_MUTED),
+        **field_style(),
     )
 
     total_text = ft.Text(
@@ -149,18 +169,7 @@ def main(page: ft.Page) -> None:
     status_text = ft.Text("", size=13, color=C_OK)
     items_count = ft.Text("1 позиция", size=12, color=C_MUTED)
 
-    rows_column = ft.Column(spacing=10)
-
-    def field_style(**kwargs) -> dict:
-        return {
-            "dense": True,
-            "border_color": C_LINE,
-            "focused_border_color": C_ACCENT,
-            "cursor_color": C_ACCENT,
-            "text_style": ft.TextStyle(color=C_INK, size=13),
-            "label_style": ft.TextStyle(color=C_MUTED, size=12),
-            **kwargs,
-        }
+    rows_column = ft.Column(spacing=SPACE_MD)
 
     def sync_item_from_ui(item: ItemRow) -> None:
         if item.name_tf:
@@ -233,8 +242,9 @@ def main(page: ft.Page) -> None:
             label="НДС",
             value=item.vat if item.vat in VAT_OPTIONS else VAT_OPTIONS[0],
             options=[ft.dropdown.Option(v) for v in VAT_OPTIONS],
-            width=120,
-            dense=True,
+            width=145,
+            dense=False,
+            height=52,
             on_select=recalc,
             border_color=C_LINE,
             focused_border_color=C_ACCENT,
@@ -251,13 +261,17 @@ def main(page: ft.Page) -> None:
         )
 
         num_badge = ft.Container(
-            content=ft.Text(str(index), size=13,
-                            weight=ft.FontWeight.BOLD, color=C_ACCENT),
+            content=ft.Text(
+                str(index),
+                size=13,
+                weight=ft.FontWeight.BOLD,
+                color=C_ACCENT,
+            ),
             width=40,
-            height=40,
+            height=52,
             alignment=ft.Alignment.CENTER,
             bgcolor=C_ACCENT_SOFT,
-            border_radius=8,
+            border_radius=RADIUS_SM,
         )
         delete_btn = ft.IconButton(
             icon=ft.Icons.CLOSE,
@@ -268,21 +282,21 @@ def main(page: ft.Page) -> None:
             disabled=len(items) <= 1,
         )
 
-        return ft.Container(
-            content=ft.Column(
+        return panel_card(
+            ft.Column(
                 [
                     ft.Row(
                         [num_badge, item.name_tf, delete_btn],
-                        spacing=10,
+                        spacing=SPACE_MD,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
                     ft.Row(
                         [
                             item.qty_tf,
-                            ft.Container(
-                                content=ft.Text("шт", size=14, color=C_MUTED),
-                                padding=ft.Padding.only(top=18),
-                            ),
+                            # ft.Container(
+                            #     content=ft.Text("шт", size=14, color=C_MUTED),
+                            #     padding=ft.Padding.only(top=18),
+                            # ),
                             item.price_tf,
                             item.vat_dd,
                             ft.Container(
@@ -292,27 +306,27 @@ def main(page: ft.Page) -> None:
                                                 color=C_MUTED),
                                         item.sum_label,
                                     ],
-                                    spacing=2,
+                                    spacing=SPACE_XS,
                                     horizontal_alignment=ft.CrossAxisAlignment.END,
                                 ),
-                                padding=ft.Padding.only(left=8, top=4),
+                                expand=True,
+                                alignment=ft.Alignment.CENTER_RIGHT,
+                                padding=ft.Padding.only(
+                                    left=SPACE_SM, top=SPACE_XS),
                             ),
                         ],
-                        spacing=10,
+                        spacing=SPACE_MD,
                         vertical_alignment=ft.CrossAxisAlignment.START,
                     ),
                 ],
-                spacing=8,
+                spacing=SPACE_SM,
             ),
-            padding=16,
-            bgcolor=C_PANEL,
-            border=ft.Border.all(1, C_LINE),
-            border_radius=12,
         )
 
     def rebuild_rows() -> None:
-        rows_column.controls = [make_row_ui(
-            item, i + 1) for i, item in enumerate(items)]
+        rows_column.controls = [
+            make_row_ui(item, i + 1) for i, item in enumerate(items)
+        ]
         page.update()
 
     def add_item(_: ft.ControlEvent | None = None) -> None:
@@ -359,8 +373,8 @@ def main(page: ft.Page) -> None:
             )
 
         order_date = date_field.value or date.today().strftime("%d.%m.%Y")
-        # safe_date = order_date.replace(".", "-")
-        out_path = OUTPUT_DIR / f"Товарный чек №{receipt_no} от {order_date}.docx"
+        out_path = OUTPUT_DIR / \
+            f"Товарный чек №{receipt_no} от {order_date}.docx"
 
         build_order_docx(
             receipt_no=receipt_no,
@@ -405,8 +419,8 @@ def main(page: ft.Page) -> None:
     if logo_path is not None:
         logo_control: ft.Control = ft.Image(
             src=str(logo_path),
-            width=88,
-            height=88,
+            width=112,
+            height=112,
             fit=ft.BoxFit.CONTAIN,
         )
     else:
@@ -421,11 +435,11 @@ def main(page: ft.Page) -> None:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
-            width=88,
-            height=88,
+            width=112,
+            height=112,
             alignment=ft.Alignment.CENTER,
             border=ft.Border.all(1, "#3D5C4A"),
-            border_radius=8,
+            border_radius=RADIUS_SM,
             bgcolor="#1C3228",
         )
 
@@ -435,40 +449,42 @@ def main(page: ft.Page) -> None:
                 logo_control,
                 ft.Column(
                     [
-                        ft.Text("PROSTOR", size=20,
-                                weight=ft.FontWeight.BOLD, color="#FFFFFF"),
+                        ft.Text(
+                            "PROSTOR",
+                            size=20,
+                            weight=ft.FontWeight.BOLD,
+                            color="#FFFFFF",
+                        ),
                         ft.Text(SELLER_NAME, size=12, color="#B8C9BF"),
                         ft.Text(SELLER_TAGLINE, size=11, color="#8FA898"),
                     ],
-                    spacing=2,
+                    spacing=SPACE_XS,
                     expand=True,
                 ),
             ],
-            spacing=16,
+            spacing=SPACE_LG,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         ),
-        padding=ft.Padding.symmetric(horizontal=28, vertical=20),
+        padding=ft.Padding.symmetric(horizontal=PAD_PAGE, vertical=SPACE_SM),
         bgcolor=C_HEADER,
     )
 
-    details_card = ft.Container(
-        content=ft.Column(
+    details_card = panel_card(
+        ft.Column(
             [
                 section_title("Чек", "Номер, дата и покупатель"),
-                ft.Container(height=8),
-                ft.Row([number_field, date_field, buyer_field], spacing=14),
+                ft.Row(
+                    [number_field, date_field, buyer_field],
+                    spacing=SPACE_MD,
+                ),
             ],
-            spacing=0,
+            spacing=SPACE_MD,
         ),
-        padding=20,
-        bgcolor=C_PANEL,
-        border=ft.Border.all(1, C_LINE),
-        border_radius=14,
     )
 
     items_header = ft.Row(
         [
-            section_title("Товары и услуги", "Колонки как в товарном чеке"),
+            section_title("Товары и услуги"),
             ft.Container(expand=True),
             items_count,
             ft.OutlinedButton(
@@ -478,26 +494,34 @@ def main(page: ft.Page) -> None:
                 style=ft.ButtonStyle(
                     color=C_ACCENT,
                     side=ft.BorderSide(1, C_ACCENT),
-                    shape=ft.RoundedRectangleBorder(radius=8),
+                    shape=ft.RoundedRectangleBorder(radius=RADIUS_SM),
+                    padding=ft.Padding.symmetric(
+                        horizontal=SPACE_LG, vertical=SPACE_MD),
                 ),
             ),
         ],
-        vertical_alignment=ft.CrossAxisAlignment.END,
+        spacing=SPACE_MD,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
-    summary_card = ft.Container(
-        content=ft.Column(
+    summary_card = panel_card(
+        ft.Column(
             [
-                ft.Text("ИТОГ К ОПЛАТЕ", size=12,
-                        weight=ft.FontWeight.W_600, color=C_MUTED),
-                total_text,
-                ft.Container(
-                    content=ft.Divider(color=C_LINE, height=1),
-                    padding=ft.Padding.symmetric(vertical=8),
+                ft.Text(
+                    "ИТОГ К ОПЛАТЕ",
+                    size=12,
+                    weight=ft.FontWeight.W_600,
+                    color=C_MUTED,
                 ),
-                ft.Text("Прописью", size=11, color=C_MUTED),
-                words_text,
-                ft.Container(height=12),
+                total_text,
+                ft.Divider(color=C_LINE, height=1),
+                ft.Column(
+                    [
+                        # ft.Text("", size=11, color=C_MUTED),
+                        words_text,
+                    ],
+                    spacing=SPACE_XS,
+                ),
                 ft.FilledButton(
                     "Сформировать чек",
                     icon=ft.Icons.DESCRIPTION_OUTLINED,
@@ -505,22 +529,19 @@ def main(page: ft.Page) -> None:
                     style=ft.ButtonStyle(
                         bgcolor=C_ACCENT,
                         color="#FFFFFF",
-                        shape=ft.RoundedRectangleBorder(radius=10),
+                        shape=ft.RoundedRectangleBorder(radius=RADIUS_SM),
                         padding=ft.Padding.symmetric(
-                            horizontal=20, vertical=16),
+                            horizontal=SPACE_LG, vertical=SPACE_MD),
                     ),
                     width=float("inf"),
                 ),
                 status_text,
             ],
-            spacing=4,
+            spacing=SPACE_MD,
         ),
-        padding=22,
-        bgcolor=C_ACCENT_SOFT,
-        border=ft.Border.all(1, "#C5D9CC"),
-        border_radius=14,
-        width=300,
+        soft=True,
     )
+    summary_card.width = 300
 
     body = ft.Container(
         content=ft.Row(
@@ -529,22 +550,22 @@ def main(page: ft.Page) -> None:
                     content=ft.Column(
                         [
                             details_card,
-                            ft.Container(height=8),
-                            items_header,
-                            ft.Container(height=4),
-                            rows_column,
+                            ft.Column(
+                                [items_header, rows_column],
+                                spacing=SPACE_MD,
+                            ),
                         ],
-                        spacing=0,
+                        spacing=SPACE_XL,
                         expand=True,
                     ),
                     expand=True,
                 ),
                 summary_card,
             ],
-            spacing=20,
+            spacing=SPACE_XL,
             vertical_alignment=ft.CrossAxisAlignment.START,
         ),
-        padding=ft.Padding.symmetric(horizontal=28, vertical=24),
+        padding=PAD_PAGE,
     )
 
     page.add(ft.Column([header, body], spacing=0, expand=True))
