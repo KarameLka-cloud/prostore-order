@@ -18,6 +18,8 @@ from seller import (
     SELLER_SIGN,
     SELLER_TAGLINE,
     resolve_logo_path,
+    resolve_qr_maps_path,
+    resolve_qr_telegram_path,
 )
 
 CONTENT_WIDTH_CM = 18.0
@@ -141,14 +143,16 @@ def _write_stacked_cell(cell, lines: list[tuple[str, dict]]) -> None:
 
 
 def _add_header(doc: Document) -> None:
-    header = doc.add_table(rows=1, cols=2)
+    header = doc.add_table(rows=1, cols=3)
     _set_table_borders(header, visible=False)
-    _set_table_full_width(header, [4.4, 13.6])
+    _set_table_full_width(header, [4.2, 11.0, 2.8])
 
     logo_cell = header.rows[0].cells[0]
     text_cell = header.rows[0].cells[1]
+    qr_cell = header.rows[0].cells[2]
     logo_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
     text_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+    qr_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
 
     logo_cell.text = ""
     logo_path = resolve_logo_path()
@@ -198,7 +202,18 @@ def _add_header(doc: Document) -> None:
     run = tag_p.add_run(SELLER_TAGLINE)
     _set_run_font(run, size=9)
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(8)
+    qr_cell.text = ""
+    qr_path = resolve_qr_telegram_path()
+    if qr_path is not None:
+        qr_p = qr_cell.paragraphs[0]
+        qr_p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        qr_p.paragraph_format.space_before = Pt(0)
+        qr_p.paragraph_format.space_after = Pt(0)
+        run = qr_p.add_run()
+        run.add_picture(str(qr_path), width=Cm(2.2))
+        _set_cell_margins(qr_cell, top=0, bottom=0, left=40, right=0)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
 
 def _merge_bank_table(doc: Document) -> None:
@@ -270,6 +285,19 @@ def _merge_bank_table(doc: Document) -> None:
     _set_cell_margins(account_value, top=40, bottom=40, left=60, right=60)
 
 
+def _add_maps_banner(doc: Document) -> None:
+    qr_path = resolve_qr_maps_path()
+    if qr_path is None:
+        return
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(6)
+    p.paragraph_format.space_after = Pt(0)
+    run = p.add_run()
+    run.add_picture(str(qr_path), width=Cm(CONTENT_WIDTH_CM))
+
+
 def build_order_docx(
     *,
     receipt_no: str,
@@ -285,28 +313,28 @@ def build_order_docx(
     section = doc.sections[0]
     section.page_width = Cm(21.0)
     section.page_height = Cm(29.7)
-    section.top_margin = Cm(1.2)
-    section.bottom_margin = Cm(1.2)
+    section.top_margin = Cm(1.0)
+    section.bottom_margin = Cm(1.0)
     section.left_margin = Cm(1.5)
     section.right_margin = Cm(1.5)
 
     _add_header(doc)
 
     _merge_bank_table(doc)
-    doc.add_paragraph().paragraph_format.space_after = Pt(10)
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
     title = f"Товарный чек №{receipt_no} от {order_date}"
-    _add_para(doc, title, size=14, bold=True, space_after=10)
+    _add_para(doc, title, size=14, bold=True, space_after=6)
 
     p = doc.add_paragraph()
-    p.paragraph_format.space_after = Pt(4)
+    p.paragraph_format.space_after = Pt(2)
     r = p.add_run("Продавец: ")
     _set_run_font(r, size=9, bold=True)
     r = p.add_run(SELLER_FULL)
     _set_run_font(r, size=9)
 
     p = doc.add_paragraph()
-    p.paragraph_format.space_after = Pt(10)
+    p.paragraph_format.space_after = Pt(6)
     r = p.add_run("Покупатель: ")
     _set_run_font(r, size=9, bold=True)
     r = p.add_run(buyer or "Розничный покупатель")
@@ -346,7 +374,7 @@ def build_order_docx(
             _write_cell(cell, item.get(key, ""), align=align, size=9)
             _set_cell_margins(cell, top=30, bottom=30, left=40, right=40)
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+    doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
     footer = doc.add_table(rows=1, cols=2)
     _set_table_borders(footer, visible=False)
@@ -380,7 +408,7 @@ def build_order_docx(
     _set_run_font(r, size=10, bold=True)
     _set_cell_margins(right, top=0, bottom=0, left=40, right=0)
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(18)
+    doc.add_paragraph().paragraph_format.space_after = Pt(8)
 
     sign = doc.add_paragraph()
     sign.paragraph_format.space_after = Pt(2)
@@ -393,6 +421,8 @@ def build_order_docx(
         p.paragraph_format.space_after = Pt(0)
         r = p.add_run(line)
         _set_run_font(r, size=9)
+
+    _add_maps_banner(doc)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     doc.save(str(path))

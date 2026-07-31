@@ -65,7 +65,7 @@ class ItemRow:
     name: str = ""
     qty: str = "1"
     unit: str = "шт"
-    price: str = "0"
+    price: str = ""
     vat: str = "Без НДС"
     name_tf: ft.TextField | None = field(default=None, repr=False)
     qty_tf: ft.TextField | None = field(default=None, repr=False)
@@ -172,7 +172,7 @@ def main(page: ft.Page) -> None:
         if item.qty_tf:
             item.qty = item.qty_tf.value or "0"
         if item.price_tf:
-            item.price = item.price_tf.value or "0"
+            item.price = item.price_tf.value or ""
         if item.vat_dd:
             item.vat = item.vat_dd.value or "Без НДС"
 

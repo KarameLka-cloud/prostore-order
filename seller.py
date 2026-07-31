@@ -10,6 +10,9 @@ LOGO_CANDIDATES = (
     _ROOT / "assets" / "logo.webp",
 )
 
+QR_TELEGRAM_PATH = _ROOT / "assets" / "qr_telegram.png"
+QR_MAPS_PATH = _ROOT / "assets" / "qr_maps.png"
+
 SELLER_NAME = "ИП Клименко Андрей Игоревич"
 SELLER_TAGLINE = "Магазин игровых приставок! PlayStation, Nintendo, Oculus, Steam, Xbox"
 SELLER_INN = "772580198140"
@@ -28,4 +31,16 @@ def resolve_logo_path() -> Path | None:
     for path in LOGO_CANDIDATES:
         if path.is_file():
             return path
+    return None
+
+
+def resolve_qr_telegram_path() -> Path | None:
+    if QR_TELEGRAM_PATH.is_file():
+        return QR_TELEGRAM_PATH
+    return None
+
+
+def resolve_qr_maps_path() -> Path | None:
+    if QR_MAPS_PATH.is_file():
+        return QR_MAPS_PATH
     return None
