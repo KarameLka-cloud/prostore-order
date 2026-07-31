@@ -1,5 +1,3 @@
-"""Создание DOCX товарного чека по образцу PDF."""
-
 from pathlib import Path
 
 from docx import Document
@@ -22,7 +20,6 @@ from seller import (
     resolve_logo_path,
 )
 
-# A4 21 см − поля 1.5 + 1.5
 CONTENT_WIDTH_CM = 18.0
 
 
@@ -102,7 +99,6 @@ def _set_table_borders(
 
 
 def _set_table_full_width(table, widths_cm: list[float]) -> None:
-    """Таблица на всю ширину текстового поля, фиксированные колонки."""
     assert abs(sum(widths_cm) - CONTENT_WIDTH_CM) < 0.05, widths_cm
     table.autofit = False
     table.allow_autofit = False
@@ -118,7 +114,7 @@ def _set_table_full_width(table, widths_cm: list[float]) -> None:
 
     tbl_w = OxmlElement("w:tblW")
     tbl_w.set(qn("w:type"), "pct")
-    tbl_w.set(qn("w:w"), "5000")  # 100%
+    tbl_w.set(qn("w:w"), "5000")
     tbl_pr.append(tbl_w)
 
     layout = OxmlElement("w:tblLayout")
@@ -132,7 +128,6 @@ def _set_table_full_width(table, widths_cm: list[float]) -> None:
 
 
 def _write_stacked_cell(cell, lines: list[tuple[str, dict]]) -> None:
-    """Несколько строк в ячейке: [(text, {bold, size}), ...]."""
     cell.text = ""
     for i, (text, opts) in enumerate(lines):
         p = cell.paragraphs[0] if i == 0 else cell.add_paragraph()
@@ -146,7 +141,6 @@ def _write_stacked_cell(cell, lines: list[tuple[str, dict]]) -> None:
 
 
 def _add_header(doc: Document) -> None:
-    """Шапка: слева логотип (или заготовка), справа название и слоган."""
     header = doc.add_table(rows=1, cols=2)
     _set_table_borders(header, visible=False)
     _set_table_full_width(header, [4.4, 13.6])
@@ -167,7 +161,6 @@ def _add_header(doc: Document) -> None:
         run = logo_p.add_run()
         run.add_picture(str(logo_path), width=Cm(3.8))
     else:
-        # Вложенная ячейка-заготовка под будущую картинку
         slot = logo_cell.add_table(rows=1, cols=1)
         slot.autofit = False
         _set_table_borders(slot, visible=True)
@@ -209,12 +202,6 @@ def _add_header(doc: Document) -> None:
 
 
 def _merge_bank_table(doc: Document) -> None:
-    """Платёжные реквизиты в стиле образца (платёжное поручение)."""
-    # 4×3:
-    # [Банк / Банк получателя] [БИК]      [bik]
-    #                          [Кор. Счёт] [corr]
-    # [ИНН …]                  [Счёт]     [account]
-    # [Получатель / имя]       ↑ merge    ↑ merge
     table = doc.add_table(rows=4, cols=3)
     table.alignment = WD_TABLE_ALIGNMENT.LEFT
     _set_table_borders(table, visible=True, color="000000", size="8")
@@ -327,7 +314,7 @@ def build_order_docx(
 
     headers = ["№", "Название товара или услуги",
                "Кол-во", "Ед. Изм.", "Цена", "НДС", "Сумма"]
-    widths_cm = [1.0, 7.0, 1.5, 1.7, 2.4, 2.0, 2.4]  # = 18.0
+    widths_cm = [1.0, 7.0, 1.5, 1.7, 2.4, 2.0, 2.4]
     aligns = [
         WD_ALIGN_PARAGRAPH.CENTER,
         WD_ALIGN_PARAGRAPH.LEFT,
@@ -361,7 +348,6 @@ def build_order_docx(
 
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
-    # Итог в одну строку: пропись слева, сумма справа
     footer = doc.add_table(rows=1, cols=2)
     _set_table_borders(footer, visible=False)
     _set_table_full_width(footer, [13.5, 4.5])
@@ -370,7 +356,6 @@ def build_order_docx(
     left.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
     right.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
 
-    # Не переносить текст прописи
     tc_pr = left._tc.get_or_add_tcPr()
     no_wrap = OxmlElement("w:noWrap")
     tc_pr.append(no_wrap)
@@ -402,7 +387,7 @@ def build_order_docx(
     r = sign.add_run("Продавец:")
     _set_run_font(r, size=9, bold=True)
 
-    for line in SELLER_SIGN.split("\n"):
+    for line in SELLER_SIGN.strip().split("\n"):
         p = doc.add_paragraph()
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after = Pt(0)

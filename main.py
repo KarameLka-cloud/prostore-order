@@ -1,5 +1,3 @@
-"""Миниприложение: товарный чек → DOCX (по образцу ИП Клименко)."""
-
 from __future__ import annotations
 
 import os
@@ -20,7 +18,6 @@ COUNTER_PATH = ROOT / "receipt_counter.txt"
 
 VAT_OPTIONS = ["Без НДС", "0%", "10%", "20%"]
 
-# —— Палитра ——
 C_INK = "#1A2E24"
 C_MUTED = "#5C6B63"
 C_LINE = "#D5DDD8"
@@ -32,7 +29,6 @@ C_HEADER = "#243D32"
 C_DANGER = "#B42318"
 C_OK = "#1B6B3A"
 
-# —— Единая сетка отступов ——
 SPACE_XS = 4
 SPACE_SM = 8
 SPACE_MD = 12
@@ -79,7 +75,6 @@ class ItemRow:
 
 
 def line_sum(item: ItemRow) -> Decimal:
-    """Сумма строки = кол-во × цена (как в образце чека). НДС — подпись в колонке."""
     qty = parse_decimal(item.qty_tf.value if item.qty_tf else item.qty)
     price = parse_decimal(item.price_tf.value if item.price_tf else item.price)
     return (qty * price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -107,7 +102,7 @@ def panel_card(content: ft.Control, *, soft: bool = False) -> ft.Container:
 def main(page: ft.Page) -> None:
     OUTPUT_DIR.mkdir(exist_ok=True)
 
-    page.title = "Товарный чек — Простор"
+    page.title = "PROSTOR"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = C_SURFACE
     page.padding = 0
@@ -293,10 +288,6 @@ def main(page: ft.Page) -> None:
                     ft.Row(
                         [
                             item.qty_tf,
-                            # ft.Container(
-                            #     content=ft.Text("шт", size=14, color=C_MUTED),
-                            #     padding=ft.Padding.only(top=18),
-                            # ),
                             item.price_tf,
                             item.vat_dd,
                             ft.Container(
@@ -386,7 +377,6 @@ def main(page: ft.Page) -> None:
             path=out_path,
         )
 
-        # Сдвигаем счётчик, если номер совпал с ожидаемым следующим
         try:
             used = int(receipt_no)
             current = int(COUNTER_PATH.read_text().strip()
@@ -405,7 +395,7 @@ def main(page: ft.Page) -> None:
             if page.platform == ft.PagePlatform.MACOS:
                 os.system(f'open "{out_path}"')
             elif page.platform == ft.PagePlatform.WINDOWS:
-                os.startfile(out_path)  # type: ignore[attr-defined]
+                getattr(os, "startfile")(out_path)
             else:
                 os.system(f'xdg-open "{out_path}"')
         except Exception:
@@ -515,13 +505,7 @@ def main(page: ft.Page) -> None:
                 ),
                 total_text,
                 ft.Divider(color=C_LINE, height=1),
-                ft.Column(
-                    [
-                        # ft.Text("", size=11, color=C_MUTED),
-                        words_text,
-                    ],
-                    spacing=SPACE_XS,
-                ),
+                words_text,
                 ft.FilledButton(
                     "Сформировать чек",
                     icon=ft.Icons.DESCRIPTION_OUTLINED,

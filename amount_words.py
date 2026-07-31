@@ -1,5 +1,3 @@
-"""Сумма и количество прописью на русском (формат товарного чека)."""
-
 from decimal import Decimal, ROUND_HALF_UP
 
 from num2words import num2words
@@ -28,10 +26,6 @@ def format_money_rub(amount) -> str:
 
 
 def amount_in_words(amount, *, capitalize: bool = True, kopecks_as_words: bool = False) -> str:
-    """
-    Пример (цифры): «Сорок семь тысяч рублей 00 копеек»
-    Пример (как в чеке): «сорок семь тысяч рублей ноль копеек»
-    """
     value = Decimal(str(amount)).quantize(
         Decimal("0.01"), rounding=ROUND_HALF_UP)
     rubles = int(value)
@@ -57,7 +51,6 @@ def items_word(count: int) -> str:
 
 
 def receipt_summary(count: int, amount) -> str:
-    """«Всего три наименования на сорок семь тысяч рублей ноль копеек»."""
     count_words = num2words(count, lang="ru", gender="n")
     money = amount_in_words(amount, capitalize=False, kopecks_as_words=True)
     return f"Всего {count_words} {items_word(count)} на {money}"
