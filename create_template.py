@@ -20,6 +20,8 @@ from seller import (
     resolve_logo_path,
     resolve_qr_maps_path,
     resolve_qr_telegram_path,
+    resolve_signature_path,
+    resolve_stamp_path,
 )
 
 CONTENT_WIDTH_CM = 18.0
@@ -298,6 +300,80 @@ def _add_maps_banner(doc: Document) -> None:
     run.add_picture(str(qr_path), width=Cm(CONTENT_WIDTH_CM))
 
 
+def _add_seller_block(doc: Document, *, with_stamp: bool) -> None:
+    signature_path = resolve_signature_path() if with_stamp else None
+    stamp_path = resolve_stamp_path() if with_stamp else None
+
+    if signature_path is None and stamp_path is None:
+        sign = doc.add_paragraph()
+        sign.paragraph_format.space_after = Pt(2)
+        r = sign.add_run("Продавец:")
+        _set_run_font(r, size=9, bold=True)
+
+        for line in SELLER_SIGN.strip().split("\n"):
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            r = p.add_run(line)
+            _set_run_font(r, size=9)
+        return
+
+    # Одна строка: «Продавец:» | подпись | печать — всё по центру по вертикали
+    widths: list[float] = [2.3]
+    if signature_path is not None:
+        widths.append(4.2)
+    if stamp_path is not None:
+        widths.append(round(CONTENT_WIDTH_CM - sum(widths), 1))
+
+    table = doc.add_table(rows=1, cols=len(widths))
+    _set_table_borders(table, visible=False)
+    _set_table_full_width(table, widths)
+
+    label_cell = table.rows[0].cells[0]
+    label_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+    label_cell.text = ""
+    label_p = label_cell.paragraphs[0]
+    label_p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    label_p.paragraph_format.space_before = Pt(0)
+    label_p.paragraph_format.space_after = Pt(0)
+    r = label_p.add_run("Продавец:")
+    _set_run_font(r, size=9, bold=True)
+    _set_cell_margins(label_cell, top=0, bottom=0, left=0, right=60)
+
+    col = 1
+    if signature_path is not None:
+        sig_cell = table.rows[0].cells[col]
+        sig_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+        sig_cell.text = ""
+        sig_p = sig_cell.paragraphs[0]
+        sig_p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        sig_p.paragraph_format.space_before = Pt(0)
+        sig_p.paragraph_format.space_after = Pt(0)
+        run = sig_p.add_run()
+        run.add_picture(str(signature_path), width=Cm(4.0))
+        _set_cell_margins(sig_cell, top=0, bottom=0, left=0, right=40)
+        col += 1
+
+    if stamp_path is not None:
+        stamp_cell = table.rows[0].cells[col]
+        stamp_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+        stamp_cell.text = ""
+        stamp_p = stamp_cell.paragraphs[0]
+        stamp_p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        stamp_p.paragraph_format.space_before = Pt(0)
+        stamp_p.paragraph_format.space_after = Pt(0)
+        run = stamp_p.add_run()
+        run.add_picture(str(stamp_path), width=Cm(3.6))
+        _set_cell_margins(stamp_cell, top=0, bottom=0, left=0, right=0)
+
+    for line in SELLER_SIGN.strip().split("\n"):
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
+        r = p.add_run(line)
+        _set_run_font(r, size=9)
+
+
 def build_order_docx(
     *,
     receipt_no: str,
@@ -307,6 +383,7 @@ def build_order_docx(
     total: str,
     total_words_line: str,
     path: Path,
+    with_stamp: bool = False,
 ) -> Path:
     doc = Document()
 
@@ -410,17 +487,7 @@ def build_order_docx(
 
     doc.add_paragraph().paragraph_format.space_after = Pt(8)
 
-    sign = doc.add_paragraph()
-    sign.paragraph_format.space_after = Pt(2)
-    r = sign.add_run("Продавец:")
-    _set_run_font(r, size=9, bold=True)
-
-    for line in SELLER_SIGN.strip().split("\n"):
-        p = doc.add_paragraph()
-        p.paragraph_format.space_before = Pt(0)
-        p.paragraph_format.space_after = Pt(0)
-        r = p.add_run(line)
-        _set_run_font(r, size=9)
+    _add_seller_block(doc, with_stamp=with_stamp)
 
     _add_maps_banner(doc)
 

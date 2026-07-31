@@ -152,6 +152,13 @@ def main(page: ft.Page) -> None:
         expand=True,
         **field_style(),
     )
+    stamp_checkbox = ft.Checkbox(
+        label="Печать",
+        value=False,
+        active_color=C_ACCENT,
+        check_color="#FFFFFF",
+        label_style=ft.TextStyle(color=C_INK, size=13),
+    )
 
     total_text = ft.Text(
         "0,00 ₽", size=28, weight=ft.FontWeight.BOLD, color=C_INK)
@@ -375,6 +382,7 @@ def main(page: ft.Page) -> None:
             total=format_money(total_sum),
             total_words_line=receipt_summary(len(doc_items), total_sum),
             path=out_path,
+            with_stamp=bool(stamp_checkbox.value),
         )
 
         try:
@@ -464,8 +472,18 @@ def main(page: ft.Page) -> None:
             [
                 section_title("Чек", "Номер, дата и покупатель"),
                 ft.Row(
-                    [number_field, date_field, buyer_field],
+                    [
+                        number_field,
+                        date_field,
+                        buyer_field,
+                        ft.Container(
+                            content=stamp_checkbox,
+                            height=52,
+                            alignment=ft.Alignment.CENTER_LEFT,
+                        ),
+                    ],
                     spacing=SPACE_MD,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
             ],
             spacing=SPACE_MD,
