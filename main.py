@@ -102,7 +102,7 @@ def panel_card(content: ft.Control, *, soft: bool = False) -> ft.Container:
 def main(page: ft.Page) -> None:
     OUTPUT_DIR.mkdir(exist_ok=True)
 
-    page.title = "PROSTOR"
+    page.title = "PROSTORE"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = C_SURFACE
     page.padding = 0
@@ -448,7 +448,7 @@ def main(page: ft.Page) -> None:
                 ft.Column(
                     [
                         ft.Text(
-                            "PROSTOR",
+                            "PROSTORE",
                             size=20,
                             weight=ft.FontWeight.BOLD,
                             color="#FFFFFF",
