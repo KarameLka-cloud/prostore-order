@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -12,7 +13,15 @@ from amount_words import format_money, format_money_rub, receipt_summary
 from create_template import build_order_docx
 from seller import SELLER_NAME, SELLER_TAGLINE, resolve_logo_path
 
-ROOT = Path(__file__).parent
+
+def app_dir() -> Path:
+    """Writable dir next to the .exe when frozen; project root in development."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+ROOT = app_dir()
 OUTPUT_DIR = ROOT / "Товарные чеки"
 COUNTER_PATH = ROOT / "receipt_counter.txt"
 

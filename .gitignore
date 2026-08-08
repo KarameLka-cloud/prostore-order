@@ -5,3 +5,6 @@ __pycache__/
 Товарные чеки/
 receipt_counter.txt
 .DS_Store
+build/
+dist/
+prostore.spec
