@@ -409,6 +409,12 @@ def main(page: ft.Page) -> None:
         except ValueError:
             pass
 
+        # Сбросить список товаров после успешного формирования чека
+        items.clear()
+        items.append(ItemRow())
+        rebuild_rows()
+        recalc()
+
         # WEB-режим (Linux-сервер): файл собран на сервере,
         # отдаём байты в браузер через нативный диалог "Сохранить".
         # Без src_bytes файл останется только на сервере.
@@ -424,11 +430,10 @@ def main(page: ft.Page) -> None:
                 )
                 status_text.value = f"Файл {file_name} отправлен в браузер. Проверьте загрузки."
                 status_text.color = C_OK
-                page.update()
             except Exception as ex:
                 status_text.value = f"Файл собран на сервере ({file_name}), но скачать не удалось: {ex}"
                 status_text.color = C_DANGER
-                page.update()
+            page.update()
             return
 
         status_text.value = f"Сохранено: {out_path.name}"
