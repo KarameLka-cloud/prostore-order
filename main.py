@@ -111,6 +111,11 @@ def panel_card(content: ft.Control, *, soft: bool = False) -> ft.Container:
 def main(page: ft.Page) -> None:
     OUTPUT_DIR.mkdir(exist_ok=True)
 
+    # В WEB-режиме файл отдаём в браузер через FilePicker.save_file(src_bytes=...).
+    # В Flet >=0.70 FilePicker это Service: создаём новый экземпляр прямо
+    # в обработчике (await ft.FilePicker().save_file(...)), в overlay/services
+    # вручную класть ничего не нужно.
+
     page.title = "PROSTORE"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = C_SURFACE
@@ -341,7 +346,7 @@ def main(page: ft.Page) -> None:
         rebuild_rows()
         recalc()
 
-    def export_docx(_: ft.ControlEvent) -> None:
+    async def export_docx(_: ft.ControlEvent) -> None:
         buyer = (buyer_field.value or "").strip()
         if not buyer:
             status_text.value = "Укажите покупателя."
@@ -380,8 +385,8 @@ def main(page: ft.Page) -> None:
             )
 
         order_date = date_field.value or date.today().strftime("%d.%m.%Y")
-        out_path = OUTPUT_DIR / \
-            f"Товарный чек №{receipt_no} от {order_date}.docx"
+        file_name = f"Товарный чек №{receipt_no} от {order_date}.docx"
+        out_path = OUTPUT_DIR / file_name
 
         build_order_docx(
             receipt_no=receipt_no,
@@ -404,6 +409,28 @@ def main(page: ft.Page) -> None:
         except ValueError:
             pass
 
+        # WEB-режим (Linux-сервер): файл собран на сервере,
+        # отдаём байты в браузер через нативный диалог "Сохранить".
+        # Без src_bytes файл останется только на сервере.
+        if page.web:
+            try:
+                data = out_path.read_bytes()
+                await ft.FilePicker().save_file(
+                    dialog_title="Сохранить чек",
+                    file_name=file_name,
+                    file_type=ft.FilePickerFileType.CUSTOM,
+                    allowed_extensions=["docx"],
+                    src_bytes=data,
+                )
+                status_text.value = f"Файл {file_name} отправлен в браузер. Проверьте загрузки."
+                status_text.color = C_OK
+                page.update()
+            except Exception as ex:
+                status_text.value = f"Файл собран на сервере ({file_name}), но скачать не удалось: {ex}"
+                status_text.color = C_DANGER
+                page.update()
+            return
+
         status_text.value = f"Сохранено: {out_path.name}"
         status_text.color = C_OK
         page.update()
@@ -424,8 +451,11 @@ def main(page: ft.Page) -> None:
 
     logo_path = resolve_logo_path()
     if logo_path is not None:
+        # В WEB-режиме браузер не может грузить file:///C:/... —
+        # отдаём через assets_dir (файл лежит в assets/, в UI ссылаемся по имени).
+        logo_src = logo_path.name if page.web else str(logo_path)
         logo_control: ft.Control = ft.Image(
-            src=str(logo_path),
+            src=logo_src,
             width=112,
             height=112,
             fit=ft.BoxFit.CONTAIN,
@@ -583,4 +613,28 @@ def main(page: ft.Page) -> None:
 
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--web", action="store_true",
+                        help="Запустить в режиме WEB_BROWSER для Linux-сервера")
+    parser.add_argument("--host", default=os.getenv("HOST", "0.0.0.0"))
+    parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "8550")))
+    parser.add_argument("--view", default=os.getenv("FLET_VIEW", ""))
+    args = parser.parse_args()
+
+    # На сервере запускать так:
+    #   python main.py --web --host 0.0.0.0 --port 8550
+    # или через env:  FLET_VIEW=WEB_BROWSER PORT=8550 python main.py
+    view = ft.AppView.FLET_APP
+    view_str = (args.view or "").strip().upper()
+    if args.web or view_str in ("WEB", "BROWSER", "WEB_BROWSER"):
+        view = ft.AppView.WEB_BROWSER
+    elif view_str in ("FLET_APP", "APP", "DESKTOP"):
+        view = ft.AppView.FLET_APP
+
+    if view == ft.AppView.WEB_BROWSER:
+        ft.run(main, view=view, host=args.host, port=args.port,
+               assets_dir="assets")
+    else:
+        ft.run(main, assets_dir="assets")
