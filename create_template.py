@@ -489,7 +489,7 @@ def build_order_docx(
 
     _add_seller_block(doc, with_stamp=with_stamp)
 
-    _add_maps_banner(doc)
+    # _add_maps_banner(doc)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     doc.save(str(path))

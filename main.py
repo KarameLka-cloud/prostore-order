@@ -116,7 +116,7 @@ def main(page: ft.Page) -> None:
     # в обработчике (await ft.FilePicker().save_file(...)), в overlay/services
     # вручную класть ничего не нужно.
 
-    page.title = "PROSTORE"
+    page.title = "RUSTORE"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = C_SURFACE
     page.padding = 0
@@ -492,7 +492,7 @@ def main(page: ft.Page) -> None:
                 ft.Column(
                     [
                         ft.Text(
-                            "PROSTORE",
+                            "RUSTORE",
                             size=20,
                             weight=ft.FontWeight.BOLD,
                             color="#FFFFFF",

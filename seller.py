@@ -15,14 +15,14 @@ QR_MAPS_PATH = _ROOT / "assets" / "qr_maps.png"
 SIGNATURE_PATH = _ROOT / "assets" / "signature.png"
 STAMP_PATH = _ROOT / "assets" / "stamp.png"
 
-SELLER_NAME = "ИП Клименко Андрей Игоревич"
-SELLER_TAGLINE = "Магазин игровых приставок! PlayStation, Nintendo, Oculus, Steam, Xbox"
-SELLER_INN = "772580198140"
-SELLER_ACCOUNT = "40802810120000970922"
+SELLER_NAME = "ИП Кадыров Рустам Камильевич"
+SELLER_TAGLINE = "Магазин цифровой техники"
+SELLER_INN = "382706466702"
+SELLER_ACCOUNT = "40802810720001170163"
 SELLER_BANK = 'ООО "Банк Точка"'
 SELLER_BIK = "044525104"
 SELLER_CORR = "30101810745374525104"
-SELLER_SIGN = "Индивидуальный предприниматель\nКлименко Андрей Игоревич"
+SELLER_SIGN = "Индивидуальный предприниматель\nКадыров Рустам Камильевич"
 
 SELLER_FULL = (
     f"{SELLER_NAME}, ИНН {SELLER_INN}, р/с {SELLER_ACCOUNT}, {SELLER_BANK}, БИК {SELLER_BIK}, к/с {SELLER_CORR}"
